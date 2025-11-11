@@ -47,10 +47,10 @@ func MustLoad() *Config {
 func getConfigPath() string {
 	exePath, err := os.Executable()
 	if err != nil {
-		return "env.conf"
+		return "env.yaml"
 	}
 
 	exeDir := filepath.Dir(exePath)
 
-	return filepath.Join(exeDir, "env.conf")
+	return filepath.Join(exeDir, "env.yaml")
 }
