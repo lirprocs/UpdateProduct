@@ -98,7 +98,7 @@ func (cg *CertGenerator) GenerateWildcardCert() error {
 		NotAfter:    time.Now().AddDate(2, 0, 0),
 		KeyUsage:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		IPAddresses: []net.IP{net.ParseIP("127.0.0.1"), net.ParseIP("::1"), net.IPv4(127, 0, 0, 1), net.IPv6loopback},
+		IPAddresses: []net.IP{net.ParseIP("::1")},
 		DNSNames:    []string{"localhost", "*.badssl.test", "badssl.test", "self-signed.badssl.test", "expired.badssl.test", "mixed.badssl.test", "rc4.badssl.test", "hsts.badssl.test"},
 	}
 

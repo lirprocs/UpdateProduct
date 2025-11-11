@@ -68,6 +68,17 @@ func main() {
 			if state == http.StateActive {
 				if tlsConn, ok := conn.(*tls.Conn); ok {
 					state := tlsConn.ConnectionState()
+					remote := conn.RemoteAddr().String()
+					host, _, _ := net.SplitHostPort(remote)
+					ip := net.ParseIP(host)
+					ipFamily := "unknown"
+					if ip != nil {
+						if ip.To4() != nil {
+							ipFamily = "IPv4"
+						} else {
+							ipFamily = "IPv6"
+						}
+					}
 					version := "unknown"
 					switch state.Version {
 					case tls.VersionTLS10:
@@ -80,7 +91,7 @@ func main() {
 						version = "TLS 1.3"
 					}
 					cipherSuite := tls.CipherSuiteName(state.CipherSuite)
-					log.Printf("TLS connection: version=%s, cipher=%s, от %s", version, cipherSuite, conn.RemoteAddr())
+					log.Printf("TLS connection: version=%s, cipher=%s, family=%s, от %s", version, cipherSuite, ipFamily, conn.RemoteAddr())
 				}
 			}
 		},
@@ -91,5 +102,10 @@ func main() {
 
 	certFile := filepath.Join(certDir, "wildcard.crt")
 	keyFile := filepath.Join(keyDir, "wildcard.key")
-	log.Fatal(server.ListenAndServeTLS(certFile, keyFile))
+	// Listen only on IPv6 to prevent IPv4 access
+	ln, err := net.Listen("tcp6", "[::]"+port)
+	if err != nil {
+		log.Fatalf("Failed to bind IPv6 listener: %v", err)
+	}
+	log.Fatal(server.ServeTLS(ln, certFile, keyFile))
 }
