@@ -10,6 +10,7 @@
 go.work
 versioninfo.json
 
+
 # Сертификаты и ключи
 certs/
 keys/

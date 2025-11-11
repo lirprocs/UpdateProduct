@@ -11,11 +11,7 @@ import (
 	"path/filepath"
 )
 
-const (
-	updateDir = "updates"
-)
-
-func makeDir() {
+func makeDir(updateDir string) {
 	if _, err := os.Stat(updateDir); os.IsNotExist(err) {
 		err := os.Mkdir(updateDir, 0750)
 		if err != nil {
@@ -28,7 +24,7 @@ func makeDir() {
 func main() {
 	certDir := "certs"
 	keyDir := "keys"
-	port := ":443"
+	cfg := MustLoad()
 
 	fmt.Println("Update Server by Lirprocs")
 	fmt.Println("https://github.com/lirprocs")
@@ -41,19 +37,19 @@ func main() {
 		}
 	}
 
-	makeDir()
-	fmt.Printf("Place the files in a folder %s \n", updateDir)
+	makeDir(cfg.Server.UpdateDir)
+	fmt.Printf("Place the files in a folder %s \n", cfg.Server.UpdateDir)
 	for {
 		fmt.Printf("Press Enter to continue \n")
 		bufio.NewReader(os.Stdin).ReadBytes('\n')
-		file, _ := os.ReadDir("./" + updateDir)
+		file, _ := os.ReadDir("./" + cfg.Server.UpdateDir)
 		if len(file) != 0 {
 			break
 		}
 		fmt.Printf("Put the files in a folder \n")
 	}
 
-	http.Handle("/updates/", http.StripPrefix("/updates/", http.FileServer(http.Dir(updateDir))))
+	http.Handle("/updates/", http.StripPrefix("/updates/", http.FileServer(http.Dir(cfg.Server.UpdateDir))))
 
 	tlsConfig := &tls.Config{
 		MinVersion:       tls.VersionTLS13,
@@ -62,7 +58,7 @@ func main() {
 	}
 
 	server := &http.Server{
-		Addr:      "[::]" + port,
+		Addr:      cfg.Server.Address + cfg.Server.Port,
 		TLSConfig: tlsConfig,
 		ConnState: func(conn net.Conn, state http.ConnState) {
 			if state == http.StateActive {
@@ -97,13 +93,12 @@ func main() {
 		},
 	}
 
-	log.Printf("HTTPS update server started on  https://[::1]%s", port)
-	log.Printf("Files are available at: https://[::1]%s/updates/", port)
+	log.Printf("HTTPS update server started on  https://[::1]%s", cfg.Server.Port)
+	log.Printf("Files are available at: https://[::1]%s/updates/", cfg.Server.Port)
 
 	certFile := filepath.Join(certDir, "wildcard.crt")
 	keyFile := filepath.Join(keyDir, "wildcard.key")
-	// Listen only on IPv6 to prevent IPv4 access
-	ln, err := net.Listen("tcp6", "[::]"+port)
+	ln, err := net.Listen("tcp6", cfg.Server.Address+cfg.Server.Port)
 	if err != nil {
 		log.Fatalf("Failed to bind IPv6 listener: %v", err)
 	}
