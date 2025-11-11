@@ -12,7 +12,7 @@ UpdateProduct - это простой и безопасный HTTPS-сервер
 - **TLS 1.3 только** - использует исключительно TLS 1.3 для максимальной безопасности
 - **Простой файловый сервер** - раздает файлы из директории `updates/`
 - **Логирование соединений** - отслеживает все TLS-соединения с информацией о версии и шифровании
-- **IPv6 поддержка** - сервер работает на IPv6 адресе `[::1]`
+- **IPv6 только** - сервер работает исключительно на IPv6 адресе `[::1]`, доступ по IPv4 заблокирован
 
 ## Требования
 
@@ -26,14 +26,21 @@ git clone https://github.com/lirprocs/UpdateProduct.git
 cd UpdateProduct
 ```
 
-2. Соберите проект:
+2. Установите goversioninfo (если еще не установлен):
 ```bash
+go install github.com/josephspurrier/goversioninfo/cmd/goversioninfo@latest
+```
+
+3. Добавление манифеста и сборка проекта:
+```bash
+goversioninfo -manifest UpdateProduct.exe.manifest versioninfo.json
 go build -o UpdateProduct.exe
 ```
 
-3. Добавление манифеста: 
+**Альтернативный способ** (используя mt.exe после сборки):
 ```bash
-mt.exe -manifest UpdateProduct.exe.manifest -outputresource:UpdateProduct.exe;#1
+go build -o UpdateProduct.exe
+.\mt.exe -manifest UpdateProduct.exe.manifest -outputresource:UpdateProduct.exe;#1
 ```
 
 4. Установите `ca-root.crt` в хранилище доверенных корневых сертификатов
@@ -66,6 +73,7 @@ UpdateProduct/
 ├── go.mod                 # Файл зависимостей Go
 ├── .gitignore            # Игнорируемые файлы
 ├── UpdateProduct.exe.manifest  # Манифест для Windows (права администратора)
+├── versioninfo.json      # Конфигурация для goversioninfo
 ├── certs/                # Директория с сертификатами (генерируется автоматически)
 ├── keys/                 # Директория с ключами (генерируется автоматически)
 └── updates/              # Директория с файлами для раздачи (создается автоматически)
@@ -93,7 +101,6 @@ UpdateProduct/
      - `rc4.badssl.test`
      - `hsts.badssl.test`
    - Поддерживаемые IP-адреса:
-     - `127.0.0.1`
      - `::1` (IPv6 localhost)
 
 ## Настройка TLS
@@ -117,11 +124,12 @@ UpdateProduct/
 - Информацию о каждом TLS-соединении:
   - Версия TLS протокола
   - Используемый cipher suite
+  - Семейство IP (IPv4 или IPv6)
   - IP-адрес клиента
 
 Пример лога:
 ```
-TLS connection: version=TLS 1.3, cipher=TLS_AES_128_GCM_SHA256, от [::1]:54321
+TLS connection: version=TLS 1.3, cipher=TLS_AES_128_GCM_SHA256, family=IPv6, от [::1]:54321
 ```
 
 ## Разработка

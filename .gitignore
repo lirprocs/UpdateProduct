@@ -6,7 +6,9 @@
 *.dylib
 *.test
 *.out
+*.syso
 go.work
+versioninfo.json
 
 # Сертификаты и ключи
 certs/
